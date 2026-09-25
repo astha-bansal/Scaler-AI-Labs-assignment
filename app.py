@@ -60,9 +60,10 @@ async def redact_endpoint(
 
     try:
         input_path.write_bytes(await file.read())
-
-        redact(input_path, output_path)
-
+        
+        inventory_path = Path(__file__).with_name("entity_inventory.json")
+        redact(input_path, output_path, inventory_path)
+        
         if not output_path.exists():
             raise RuntimeError("Redaction completed but output file was not created.")
 

@@ -1,6 +1,8 @@
+````markdown
 # PII Redaction Tool
 
 ## Assignment
+
 This submission implements a DOCX PII redaction pipeline for the supplied Red Herring Prospectus.
 
 The tool detects and replaces:
@@ -19,17 +21,23 @@ The tool detects and replaces:
 The implementation is hybrid:
 
 1. **Regex detectors** for high-precision structured PII: email, Indian phone numbers, IPv4, SSN, credit cards (with Luhn validation), and explicitly labelled dates of birth.
-2. **Document-specific entity inventory** for the supplied prospectus. This inventory was generated from the document and contains the reviewed names, company names, contact emails/phones and address spans. Supplying it with `--entities` improves recall for names, organizations and addresses because these categories are difficult to detect reliably using regex alone.
+
+2. **Document-specific entity inventory** for the supplied prospectus. This inventory contains the reviewed names, company names, contact emails/phones and address spans. The deployed API automatically loads `entity_inventory.json`, while the CLI can also receive it explicitly with `--entities`. This improves recall for names, organizations and addresses because these categories are difficult to detect reliably using regex alone.
+
 3. **Heuristic fallback** when no entity inventory is supplied: corporate suffixes are used for organizations and common Indian surnames plus contextual capitalization are used for names.
+
 4. **Synthetic replacements** are deterministic and type-specific. Emails use `example.com`, IPs use the TEST-NET range `192.0.2.0/24`, and phone numbers use synthetic +91 values.
-5. Document core metadata is sanitized.
+
+5. **DOCX coverage** includes normal paragraphs, paragraphs inside tables, headers, and footers.
+
+6. **Document metadata** is sanitized so that identifying information is not unnecessarily retained in the DOCX core properties.
 
 ## Usage
 
 ```bash
 pip install -r requirements.txt
 python pii_redactor.py "Red Herring Prospectus.docx" redacted_prospectus.docx --entities entity_inventory.json --report redaction_run.json
-```
+````
 
 Without `--entities`, the script falls back to generic detection:
 
@@ -37,14 +45,24 @@ Without `--entities`, the script falls back to generic detection:
 python pii_redactor.py input.docx output.docx
 ```
 
+## Web API
+
+`app.py` exposes a FastAPI service with:
+
+* `GET /` — browser upload interface
+* `GET /health` — service health check
+* `POST /redact` — accepts a DOCX file and returns the redacted DOCX
+
+The API automatically loads `entity_inventory.json` from the application directory, so the document-specific inventory is used during web redaction without requiring manual configuration.
+
 ## Tradeoffs
 
-- Names and company names are inherently ambiguous without a trained NER model or a document-specific entity inventory. The inventory was therefore used for the supplied prospectus to prioritize recall.
-- Phone-number detection is deliberately conservative to avoid treating financial figures, registration numbers and order-like identifiers as phone numbers.
-- Credit-card detection additionally applies the Luhn checksum.
-- DOB detection requires an explicit `DOB`/`Date of Birth` label, avoiding false positives on ordinary prospectus dates.
-- Address extraction is the hardest category because addresses are split across table cells and line fragments in the source document.
-- Paragraph-level replacement preserves the DOCX's overall structure and tables, but edited paragraphs may lose some run-level font formatting.
+* Names and company names are inherently ambiguous without a trained NER model or a document-specific entity inventory. The inventory was therefore used for the supplied prospectus to prioritize recall.
+* Phone-number detection is deliberately conservative to avoid treating financial figures, registration numbers and order-like identifiers as phone numbers.
+* Credit-card detection additionally applies the Luhn checksum.
+* DOB detection requires an explicit `DOB`/`Date of Birth` label, avoiding false positives on ordinary prospectus dates.
+* Address extraction is the hardest category because addresses are split across table cells and line fragments in the source document.
+* Paragraph-level replacement preserves the DOCX's overall structure and tables, but edited paragraphs may lose some run-level font formatting.
 
 ## Evaluation
 
@@ -52,20 +70,27 @@ The evaluation report contains the rule-level benchmark metrics and a document-l
 
 See `evaluation_report.docx` and `evaluation_report.md`.
 
-## Cloud deployment
+## Cloud Deployment
 
-`app.py` exposes a FastAPI upload endpoint and a small browser UI. `render.yaml` provides a Render deployment configuration.
+The application is configured for deployment using `render.yaml`.
 
-A live deployment URL is not included because deployment requires access to the submitter's GitHub/cloud account. After pushing this folder to GitHub, the Render service can be created from the repository.
+Live deployment:
+
+**[https://scaler-ai-labs-assignment-tqyt.onrender.com](https://scaler-ai-labs-assignment-tqyt.onrender.com)**
+
+The deployed service uses the same redaction pipeline and automatically loads `entity_inventory.json`.
 
 ## Files
 
-- `pii_redactor.py` — source code
-- `entity_inventory.json` — reviewed entity inventory for this specific prospectus
-- `redacted_prospectus.docx` — assignment output
-- `evaluation_report.docx` — evaluation strategy and metrics
-- `evaluation_report.md` — Markdown version for GitHub
-- `app.py` — FastAPI cloud service
-- `render.yaml` — Render deployment configuration
-- `requirements.txt` — dependencies
-- `redaction_run.json` — run manifest
+* `pii_redactor.py` — source code
+* `entity_inventory.json` — reviewed entity inventory for this specific prospectus
+* `redacted_prospectus.docx` — assignment output
+* `evaluation_report.docx` — evaluation strategy and metrics
+* `evaluation_report.md` — Markdown version for GitHub
+* `app.py` — FastAPI cloud service
+* `render.yaml` — Render deployment configuration
+* `requirements.txt` — dependencies
+* `redaction_run.json` — run manifest
+
+```
+```

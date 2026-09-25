@@ -1,0 +1,25 @@
+{
+  "detected_unique_entities": {
+    "persons": 54,
+    "companies": 54,
+    "emails": 26,
+    "phones": 21,
+    "addresses": 44,
+    "ssns": 0,
+    "credit_cards": 0,
+    "dates_of_birth": 0,
+    "ip_addresses": 0
+  },
+  "replacements_applied": {
+    "persons": 210,
+    "companies": 135,
+    "emails": 52,
+    "phones": 32,
+    "ssns": 0,
+    "credit_cards": 0,
+    "dates_of_birth": 0,
+    "ip_addresses": 0,
+    "addresses": 48
+  },
+  "output": "/mnt/data/pii_redaction_submission/redacted_prospectus.docx"
+}
